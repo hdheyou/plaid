@@ -22,8 +22,7 @@ import io.plaidapp.core.dribbble.data.search.DribbbleSearchRemoteDataSource
 import io.plaidapp.core.dribbble.data.search.DribbbleSearchService
 import io.plaidapp.core.provideFakeCoroutinesContextProvider
 import kotlinx.coroutines.experimental.CompletableDeferred
-import okhttp3.MediaType
-import okhttp3.ResponseBody
+import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -31,19 +30,22 @@ import org.junit.Test
 import org.mockito.Mockito
 import retrofit2.Response
 
+/**
+ * Tests for [DribbbleRepository] which mocks all dependencies.
+ */
 class DribbbleRepositoryTest {
 
-    private val service = Mockito.mock(DribbbleSearchService::class.java)
-    private val dataSource = DribbbleSearchRemoteDataSource(service)
+    private val dataSource = Mockito.mock(DribbbleSearchRemoteDataSource::class.java)
     private val repository = DribbbleRepository(dataSource, provideFakeCoroutinesContextProvider())
     private val query = "Plaid shirts"
     private val page = 0
 
     @Test
-    fun search_whenRequestSuccessful() {
+    fun search_whenRequestSuccessful() = runBlocking {
         // Given that the service responds with success
-        val apiResult = Response.success(shots)
-        Mockito.`when`(service.searchDeferred(query, page)).thenReturn(CompletableDeferred(apiResult))
+        val apiResult = Result.Success(shots)
+        Mockito.`when`(dataSource.search(query, page))
+            .thenReturn(CompletableDeferred(apiResult))
         var result: Result<List<Shot>>? = null
 
         // When searching for a query
@@ -58,8 +60,9 @@ class DribbbleRepositoryTest {
     @Test
     fun search_whenRequestFailed() {
         // Given that the service responds with failure
-        val apiResult = Response.error<List<Shot>>(400, ResponseBody.create(MediaType.parse(""), "Error"))
-        Mockito.`when`(service.searchDeferred(query, page)).thenReturn(CompletableDeferred(apiResult))
+        val apiResult = Response.error<List<Shot>>(400, errorResponseBody)
+        Mockito.`when`(service.searchDeferred(query, page))
+            .thenReturn(CompletableDeferred(apiResult))
         var result: Result<List<Shot>>? = null
 
         // When searching for a query

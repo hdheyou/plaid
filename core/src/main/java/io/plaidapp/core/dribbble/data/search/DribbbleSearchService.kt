@@ -44,7 +44,7 @@ interface DribbbleSearchService {
         @Query("q") query: String,
         @Query("page") page: Int?,
         @Query("s") sort: String = SORT_RECENT,
-        @Query("per_page") pageSize: Int? = PER_PAGE_DEFAULT
+        @Query("per_page") pageSize: Int = PER_PAGE_DEFAULT
     ): Deferred<Response<List<Shot>>>
 
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)

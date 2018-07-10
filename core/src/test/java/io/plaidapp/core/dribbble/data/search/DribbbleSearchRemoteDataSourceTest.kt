@@ -18,11 +18,10 @@ package io.plaidapp.core.dribbble.data.search
 
 import io.plaidapp.core.data.Result
 import io.plaidapp.core.dribbble.data.api.model.Shot
+import io.plaidapp.core.dribbble.data.errorResponseBody
 import io.plaidapp.core.dribbble.data.shots
 import kotlinx.coroutines.experimental.CompletableDeferred
 import kotlinx.coroutines.experimental.runBlocking
-import okhttp3.MediaType
-import okhttp3.ResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -30,6 +29,9 @@ import org.junit.Test
 import org.mockito.Mockito
 import retrofit2.Response
 
+/**
+ * Tests for [DribbbleSearchRemoteDataSource] which mocks the search service dependency.
+ */
 class DribbbleSearchRemoteDataSourceTest {
 
     private val service = Mockito.mock(DribbbleSearchService::class.java)
@@ -54,7 +56,7 @@ class DribbbleSearchRemoteDataSourceTest {
     @Test
     fun search_whenRequestFailed() = runBlocking {
         // Given that the service responds with failure
-        val result = Response.error<List<Shot>>(400, ResponseBody.create(MediaType.parse(""), "Error"))
+        val result = Response.error<List<Shot>>(400, errorResponseBody)
         Mockito.`when`(service.searchDeferred(query, page)).thenReturn(CompletableDeferred(result))
 
         // When performing a search

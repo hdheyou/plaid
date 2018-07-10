@@ -37,7 +37,8 @@ class DribbbleSearchRemoteDataSource(private val service: DribbbleSearchService)
                 return Result.Success(body)
             }
         }
-        return Result.Error(IOException("Error getting comments ${response.code()} ${response.message()}"))
+        return Result.Error(
+            IOException("Error getting comments ${response.code()} ${response.message()}"))
     }
 
     enum class SortOrder(val sort: String) {
