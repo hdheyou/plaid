@@ -21,6 +21,8 @@ import io.plaidapp.core.data.Result
 import io.plaidapp.core.designernews.data.api.model.Comment
 import io.plaidapp.core.designernews.data.api.model.User
 import io.plaidapp.core.designernews.data.users.UserRepository
+import io.plaidapp.core.designernews.domain.model.CommentWithReplies
+import io.plaidapp.core.designernews.domain.model.toComment
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.withContext
 
@@ -43,9 +45,9 @@ class CommentsUseCase(
             }
             return@launch
         }
-        val commentsWithReplies = (commentsWithRepliesResult as Result.Success).data
+        val commentsWithReplies = (commentsWithRepliesResult as? Result.Success)?.data.orEmpty()
         val userIds = mutableSetOf<Long>()
-        getUserIds(commentsWithReplies, userIds)
+        createUserIds(commentsWithReplies, userIds)
 
         val usersResult = userRepository.getUsers(userIds)
         val users = if (usersResult is Result.Success) {
@@ -58,10 +60,10 @@ class CommentsUseCase(
         }
     }
 
-    private fun getUserIds(comments: List<CommentWithReplies>, userIds: MutableSet<Long>) {
-        comments.map {
+    private fun createUserIds(comments: List<CommentWithReplies>, userIds: MutableSet<Long>) {
+        comments.forEach {
             userIds.add(it.userId)
-            getUserIds(it.replies, userIds)
+            createUserIds(it.replies, userIds)
         }
     }
 
@@ -78,67 +80,10 @@ class CommentsUseCase(
         users: Map<Long, User>
     ): List<Comment> {
         val comments = mutableListOf<Comment>()
-        for (comment in commentsWithReplies) {
-            comments.add(
-                    matchCommentWithRepliesAndUser(
-                            comment,
-                            match(comment.replies, users),
-                            users
-                    )
-            )
+        commentsWithReplies.forEach {
+            val user = users[it.userId]
+            comments += it.toComment(match(it.replies, users), user)
         }
         return comments
-    }
-
-    private fun matchCommentWithRepliesAndUser(
-        comment: CommentWithReplies,
-        replies: List<Comment>,
-        users: Map<Long, User>
-    ): Comment {
-        val user = users[comment.userId]
-        return Comment(
-                comment.id,
-                comment.parentId,
-                comment.body,
-                comment.createdAt,
-                comment.depth,
-                comment.upvotesCount,
-                replies,
-                comment.userId,
-                user?.displayName,
-                user?.portraitUrl,
-                false
-        )
-    }
-
-    private fun matchCommentsWithRepliesAndUsers(
-        comments: List<CommentWithReplies>,
-        replies: List<Comment>,
-        users: Map<Long, User>
-    ): List<Comment> {
-        val commentReplyMapping = replies.groupBy { it.parentCommentId }
-        // for every comment construct the CommentWithReplies based on the comment properties and
-        // the list of replies
-        return comments.mapNotNull {
-            val replies = commentReplyMapping[it.id]
-            val user = users[it.userId]
-            var comment: Comment? = null
-            if (replies != null) {
-                comment = Comment(
-                        it.id,
-                        it.parentId,
-                        it.body,
-                        it.createdAt,
-                        it.depth,
-                        it.upvotesCount,
-                        replies,
-                        it.userId,
-                        user?.displayName,
-                        user?.portraitUrl,
-                        false
-                )
-            }
-            comment
-        }
     }
 }

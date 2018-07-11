@@ -30,6 +30,7 @@ import io.plaidapp.core.designernews.data.api.replyWithReplies1
 import io.plaidapp.core.designernews.data.api.user1
 import io.plaidapp.core.designernews.data.api.user2
 import io.plaidapp.core.designernews.data.users.UserRepository
+import io.plaidapp.core.designernews.domain.model.CommentWithReplies
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
